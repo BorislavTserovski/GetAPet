@@ -1,10 +1,16 @@
+using AutoMapper;
+using GetAPet.Data;
+using GetAPet.Web.Extensions;
+using GetAPet.Web.Infrastructure.Mapping;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace GetAPet.Web
 {
@@ -27,6 +33,24 @@ namespace GetAPet.Web
             {
                 configuration.RootPath = "ClientApp/build";
             });
+
+            // Db
+            services.AddDbContext<GetAPetDbContext>(options =>
+            options.UseSqlServer(
+            Configuration.GetConnectionString("DefaultConnection")));
+
+            // AutoMapper
+            services.AddAutoMapper(typeof(Startup));
+
+            var mappingConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new AutoMapperProfile());
+            });
+
+            IMapper mapper = mappingConfig.CreateMapper();
+            services.AddSingleton(mapper);
+
+            services.AddDomainServices();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -60,6 +84,7 @@ namespace GetAPet.Web
 
                 if (env.IsDevelopment())
                 {
+                    spa.Options.StartupTimeout = TimeSpan.FromSeconds(180);
                     spa.UseReactDevelopmentServer(npmScript: "start");
                 }
             });
